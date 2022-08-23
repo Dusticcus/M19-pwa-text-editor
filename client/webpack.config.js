@@ -10,8 +10,8 @@ module.exports = () => {
   return {
     mode: 'development',
     entry: {
-      main: './src/js/index.js',
-      install: './src/js/install.js'
+      main: './src/js/main.js',
+      install: './src/js/install.js',
     },
     output: {
       filename: '[name].bundle.js',
@@ -19,16 +19,57 @@ module.exports = () => {
     },
     plugins: [
       new HtmlWebpackPlugin({
-        title: 'Client Server',
         template: './index.html',
-      })
+        title: 'JATE',
+      }),
+
+      // Injects our custom service worker
+      new InjectManifest({
+        swSrc: './src-sw.js',
+        swDest: 'src-sw.js',
+      }),
+
+      // Creates a manifest.json file.
+      new WebpackPwaManifest({
+        fingerprints: false,
+        inject: true,
+        name: 'jate',
+        short_name: 'jate',
+        description: 'Justa Another Text Editor',
+        background_color: '#225ca3',
+        theme_color: '#225ca3',
+        start_url: './',
+        publicPath: './',
+        icons: [
+          {
+            src: path.resolve('src/images/logo.png'),
+            sizes: [96, 128, 192, 256, 384, 512],
+            destination: path.join('assets', 'icons'),
+          },
+        ],
+      }),
     ],
 
     module: {
       rules: [
         {
-          test: /\.css$/,
+          test: /\.css$/i,
           use: ['style-loader', 'css-loader'],
+        },
+        {
+          test: /\.m?js$/,
+          exclude: /node_modules/,
+          // We use babel-loader in order to use ES6.
+          use: {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-env'],
+              plugins: [
+                '@babel/plugin-proposal-object-rest-spread',
+                '@babel/transform-runtime',
+              ],
+            },
+          },
         },
       ],
     },
